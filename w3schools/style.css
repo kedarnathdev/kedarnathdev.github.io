@@ -39,3 +39,7 @@ button {
 a:hover {
   text-decoration: none;
 }
+
+a:active {
+  color: #4caf50;
+}
