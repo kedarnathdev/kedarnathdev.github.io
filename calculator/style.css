@@ -1,13 +1,33 @@
+body {
+  background-image: linear-gradient(to right, blue, yellow);
+}
+
+
 .calculatorr {
   
   display: flex;
-  
+  flex-flow: column;
+  justify-content: space-evenly;
   
 }
 
+.row1, .row2, .row3, .row4, .row5 {
+  
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+  margin: auto;
+}
+
+
 button {
   background-color: #C0C2D2;
+  width: 80px;
+  height: 40px;
+  
+
 }
 button:hover {
   background-color: #FFFFFF;
 }
+
