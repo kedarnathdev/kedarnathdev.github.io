@@ -4,3 +4,10 @@
   
   
 }
+
+button {
+  background-color: #C0C2D2;
+}
+button:hover {
+  background-color: #FFFFFF;
+}
