@@ -1,5 +1,7 @@
 
-
+* {
+  font-weight: 1000;
+}
 
 
 
@@ -29,6 +31,8 @@ button {
   background-color: #C0C2D2;
   width: 80px;
   height: 40px;
+  outline: none;
+  border: 1px solid aliceblue;
   
 
 }
