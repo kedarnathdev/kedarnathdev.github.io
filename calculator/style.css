@@ -4,6 +4,21 @@
 }
 
 
+.output {
+  
+  display: flex;
+  background-color: black;
+  border: 1px solid aliceblue;
+  margin: auto;
+  width: 320px;
+  color: white;
+  align-items: flex-end;
+  flex-direction: coloumn;
+  flex-wrap: wrap;
+  
+  
+  
+}
 
 
 body {
