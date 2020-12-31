@@ -13,7 +13,14 @@
 
 .parent:hover .child {
   
-  animation: round 1s linear;
-  transform: translateX(100%);
+  animation: round 1s linear forwards;
+  
+}
+
+@keyframes round {
+  
+  100% {
+    transform:translateX(100%);
+  }
   
 }
