@@ -1,6 +1,6 @@
 function ageInDays() {
   
-  var birthYear = prompt('Enter your Birth Year 😄');
+  var birthYear = prompt('Enter your Birth Year :)');
   let ageInDayss = (2020 - birthYear) * 365;
   
   var h1 = document.createElement('h1');
