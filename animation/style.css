@@ -19,8 +19,21 @@
 
 @keyframes round {
   
-  100% {
-    transform:translateX(100%);
+  
+  
+  25% {
+    transform: translateX(100%);
   }
   
+  50% {
+    transform: translateX(100%) translateY(100%);
+  }
+  
+  75% {
+    transform: translateX(100%) translateY(100%) translateX(-100%);
+  }
+  
+  100% {
+    transform: translateX(100%) translateY(100%) translateX(-100%) translateY(-100%);
+  }
 }
