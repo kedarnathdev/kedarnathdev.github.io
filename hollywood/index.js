@@ -51,9 +51,32 @@ function getMovieSelectionNum() {
     console.log(movieDetailJson.data.movie.download_count)
     afterButtonString = afterButtonString + '<br>' + 'Title: ' 
     + movieDetailJson.data.movie.title_long+ '<br>' 
-    +'Rating: '+movieDetailJson.data.movie.rating + '<br>'
+    + 'Rating: ' + movieDetailJson.data.movie.rating + '<br>'
+    
+    for(let i = 0; i < movieDetailJson.data.movie.torrents.length; i++) {
+      if (movieDetailJson.data.movie.torrents[i].quality == '720p') {
+        afterButtonString = afterButtonString+ '720p Movie Link' +'<br>' +'url: ' + '<a href="'+ movieDetailJson.data.movie.torrents[i].url+ '">' + movieDetailJson.data.movie.torrents[i].url+'</a>' + '<br>'
+        + 'size: '+ movieDetailJson.data.movie.torrents[i].size + '<br>' + '<br>'
 
-    document.getElementById('addAfterButton').innerHTML = afterButtonString
+      }
+      if (movieDetailJson.data.movie.torrents[i].quality == '1080p') {
+        afterButtonString = afterButtonString+ '1080p Movie Link' +'<br>' +'url: ' + '<a href="'+ movieDetailJson.data.movie.torrents[i].url+ '">' + movieDetailJson.data.movie.torrents[i].url+'</a>' + '<br>'
+        + 'size: '+ movieDetailJson.data.movie.torrents[i].size + '<br>' + '<br>'
+      }
+      if (movieDetailJson.data.movie.torrents[i].quality == '2160p') {
+        afterButtonString = afterButtonString+ '2160p Movie Link' +'<br>' +'url: ' + '<a href="'+ movieDetailJson.data.movie.torrents[i].url+ '">' + movieDetailJson.data.movie.torrents[i].url+'</a>' + '<br>'
+        + 'size: '+ movieDetailJson.data.movie.torrents[i].size + '<br>' + '<br>'
+      }
+      if (movieDetailJson.data.movie.torrents[i].quality == '3D') {
+        afterButtonString = afterButtonString+ '3D Movie Link' +'<br>' +'url: ' + '<a href="'+ movieDetailJson.data.movie.torrents[i].url+ '">' + movieDetailJson.data.movie.torrents[i].url+'</a>' + '<br>'
+        + 'size: '+ movieDetailJson.data.movie.torrents[i].size + '<br>' + '<br>'
+      }
+
+      document.getElementById('addAfterButton').innerHTML = afterButtonString
+
+    }
+
+
   })
   .catch(error => console.log(error))
 }
@@ -77,5 +100,6 @@ function getMovieSelection() {
     document.getElementById("addto").innerHTML = combinedString
   })
   .catch(error => console.log(error))
+
 }
 
