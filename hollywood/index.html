@@ -9,9 +9,13 @@
 </head>
 <body>
     <script src="index.js"></script>
-
-    <button class="btn btn-primary" onclick="getMovieSelection()">Click Me To Search Movie !!</button>
-    <button class="btn btn-danger">Show Movie</button>
-    <h6 id="addto"></h6> 
+    <h3>ONLY HOLLYWOODMOVIES ALLOWED</h3>
+    <button class="btn btn-primary" onclick="getMovieSelection()">!! First Click Me To Search Movie !!</button>
+    <h6 id="addto"></h6>
+    <form id="form" class="form-control" onsubmit="return false;">
+        <input type="text" class="form-control" id="userInput">
+        <input type="submit" class="btn btn-danger" onclick='getMovieSelectionNum()'>
+    </form>
+    <h6 id="addAfterButton"></h6>
 </body>
 </html>
