@@ -30,19 +30,42 @@ function showMovie() {
   document.getElementById('addto').textContent(data.data.movie_count)
 
 }*/
+var input = new String()
+var combinedString = new String()
+var afterButtonString = 'Your Selection:-'
+var movie_id_array = new Array()
+const url1 = new URL('https://yts.mx/api/v2/list_movies.json')
+const url2 = new URL('https://yts.mx/api/v2/movie_details.json')
 
+function getMovieSelectionNum() {
+  input = document.getElementById("userInput").value;
+  console.log(input)
+  url2.searchParams.set('movie_id', movie_id_array[input-1])
+  fetch(url2)
+  .then(res2 => res2.json())
+  .then(movieDetailJson => {
+    console.log(movieDetailJson)
+    console.log(movieDetailJson.data.movie.title_long)
+    console.log(movieDetailJson.data.movie.rating)
+    console.log(movieDetailJson.data.movie.runtime)
+    console.log(movieDetailJson.data.movie.download_count)
+    afterButtonString = afterButtonString + '<br>' + 'Title: ' 
+    + movieDetailJson.data.movie.title_long+ '<br>' 
+    +'Rating: '+movieDetailJson.data.movie.rating + '<br>'
 
+    document.getElementById('addAfterButton').innerHTML = afterButtonString
+  })
+  .catch(error => console.log(error))
+}
 
 function getMovieSelection() {
-  url1 = new URL('https://yts.mx/api/v2/list_movies.json')
   let movie_name = prompt('Enter a movie name:')
   url1.searchParams.set('query_term', movie_name)
   url1.searchParams.set('limit', 50)
   fetch(url1)
   .then(res => res.json())
   .then(movieSelectJson => {
-    let movie_id_array = new Array()
-    var combinedString = new String()
+
     for (let i = 0; i < movieSelectJson.data.movie_count; i++) {
       var y = i + 1
       combinedString = combinedString + y +') '+ movieSelectJson.data.movies[i].title_long + '<br>'
@@ -50,6 +73,9 @@ function getMovieSelection() {
       console.log(y +') '+ movieSelectJson.data.movies[i].title_long)
       movie_id_array.push(movieSelectJson.data.movies[i].id)
     }
+    combinedString = combinedString + '<br>' + 'Enter a movie number below and click submit:-'
+    document.getElementById("addto").innerHTML = combinedString
   })
   .catch(error => console.log(error))
 }
+
