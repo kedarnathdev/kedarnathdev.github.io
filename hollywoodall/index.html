@@ -1,14 +1,23 @@
-<!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hollywood Movies</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+
 </head>
 
+
 <body>
-
+    <script src="index.js"></script>
+    <h3>ONLY HOLLYWOOD MOVIES ALLOWED</h3>
+    <button class="btn btn-primary" onclick="getMovieSelection()">!! First Click Me To Search Movie !!</button>
+    <h6 id="addto"></h6>
+    <form id="form" class="form-control" onsubmit="return false;">
+        <input type="text" class="form-control" id="userInput">
+        <input type="submit" class="btn btn-danger" onclick='getMovieSelectionNum()'>
+    </form>
+    <h6 id="addAfterButton"></h6>
 </body>
-
 </html>
