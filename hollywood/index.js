@@ -34,8 +34,8 @@ var input = new String()
 var combinedString = new String()
 var afterButtonString = 'Your Selection:-'
 var movie_id_array = new Array()
-const url1 = new URL('https://yts.mx/api/v2/list_movies.json')
-const url2 = new URL('https://yts.mx/api/v2/movie_details.json')
+const url1 = new URL('https://yts.unblockninja.com/api/v2/list_movies.json')
+const url2 = new URL('https://yts.unblockninja.com/api/v2/movie_details.json')
 
 function getMovieSelectionNum() {
   input = document.getElementById("userInput").value;
