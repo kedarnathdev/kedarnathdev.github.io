@@ -1,5 +1,15 @@
 var url = "http://viewbcastgold.dpgold.in:8811/VOTSBroadcast/Services/xml/GetLiveRate";
 
+var priceHistory = {
+    "MUMBAI ": 0,
+    "BANGALORE": 0,
+    "CHENNAI - CBE": 0,
+    "HYDERABAD": 0,
+    "VJA - VIZAG": 0,
+    "NELLORE": 0,
+    "SILVER ALL LOCO": 0
+}
+
 translate = {
     "MUMBAI ": "ముంబై",
     "BANGALORE": "బెంగళూరు",
@@ -10,7 +20,8 @@ translate = {
     "SILVER ALL LOCO": "వెండి"
 }
 
-fetch(url)
+function fetchData() {
+    fetch(url)
     .then(response => {
         if (!response.ok) {
             throw new Error("Failed to retrieve HTML data. Status code: " + response.status);
@@ -45,29 +56,45 @@ fetch(url)
 
         console.log(dataList);
           const tableBody = document.querySelector('#data-table tbody');
-          
-
+          tableBody.innerHTML = ""
           for (i = 3; i <= dataList.length; i++) {
             var data = dataList[i]
             console.log(data)
             const row = document.createElement('tr');
-            
             const categoryCell = document.createElement('td');
             categoryCell.textContent = translate[data.Category];
             row.appendChild(categoryCell);
-
+            const priceCell = document.createElement('td');
             if (data.Category === "SILVER ALL LOCO") {
-                const priceCell = document.createElement('td');
+                
                 priceCell.textContent = data.Price + "  (1 కేజీ)";
                 row.appendChild(priceCell);
                 tableBody.appendChild(row);
+                
             }
             else {
-                const priceCell = document.createElement('td');
+                //const priceCell = document.createElement('td');
                 priceCell.textContent = data.Price + "  (1 గ్రాము)";
                 row.appendChild(priceCell);
                 tableBody.appendChild(row);
             }
+
+            if(priceHistory[data.Category] > data.Price) {
+                priceCell.classList.add('highlightred');
+
+                setTimeout(() => {
+                    priceCell.classList.remove('highlightred');
+                }, 500);
+            }
+            else if (priceHistory[data.Category] < data.Price) {
+                priceCell.classList.add('highlightgreen');
+
+                setTimeout(() => {
+                    priceCell.classList.remove('highlightgreen');
+                }, 500);
+            }
+
+            priceHistory[data.Category] = data.Price
             
           }
           
@@ -77,3 +104,7 @@ fetch(url)
     .catch(error => {
         console.log(error);
     });
+
+}
+
+setInterval(fetchData, 2000)
