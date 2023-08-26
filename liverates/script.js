@@ -107,4 +107,28 @@ function fetchData() {
 
 }
 
+// Get the current date and time in Telugu and update it every second
+function updateCurrentDateTime() {
+    const currentDateTimeElement = document.getElementById("current-datetime");
+    setInterval(() => {
+      const now = new Date();
+      const options = {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZoneName: "short"
+      };
+      const formattedDateTime = now.toLocaleDateString("te-IN", options);
+      currentDateTimeElement.textContent = `ప్రస్తుత తేదీ మరియు సమయం: ${formattedDateTime}`;
+    }, 1000); // Update every second
+  }
+  
+  // Call the function to start updating the current date and time
+  updateCurrentDateTime();
+  
+
 setInterval(fetchData, 2000)
