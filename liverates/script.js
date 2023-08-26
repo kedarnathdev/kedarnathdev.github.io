@@ -123,7 +123,7 @@ function updateCurrentDateTime() {
         timeZoneName: "short"
       };
       const formattedDateTime = now.toLocaleDateString("te-IN", options);
-      currentDateTimeElement.textContent = `ప్రస్తుత తేదీ మరియు సమయం: ${formattedDateTime}`;
+      currentDateTimeElement.textContent = `సమయం: ${formattedDateTime}`;
     }, 1000); // Update every second
   }
   
