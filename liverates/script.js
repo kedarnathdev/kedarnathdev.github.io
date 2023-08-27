@@ -21,7 +21,7 @@ translate = {
 }
 
 function fetchData() {
-    fetch(url)
+    fetch("api.php")
     .then(response => {
         if (!response.ok) {
             throw new Error("Failed to retrieve HTML data. Status code: " + response.status);
