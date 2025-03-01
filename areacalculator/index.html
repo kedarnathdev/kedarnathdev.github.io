@@ -86,16 +86,16 @@
             <input type="number" id="east" placeholder="అడుగులు" />
         </div>
         <div class="input-group">
+            <label for="south">దక్షిణ పొడవు:</label>
+            <input type="number" id="south" placeholder="అడుగులు" />
+        </div>
+        <div class="input-group">
             <label for="west">పడమర పొడవు:</label>
             <input type="number" id="west" placeholder="అడుగులు" />
         </div>
         <div class="input-group">
             <label for="north">ఉత్తర పొడవు:</label>
             <input type="number" id="north" placeholder="అడుగులు" />
-        </div>
-        <div class="input-group">
-            <label for="south">దక్షిణ పొడవు:</label>
-            <input type="number" id="south" placeholder="అడుగులు" />
         </div>
         <button onclick="calculateArea()">విస్తీర్ణాన్ని లెక్కించండి</button>
         <div class="result" id="result"></div>
@@ -105,9 +105,9 @@
     <script>
         function calculateArea() {
             const east = parseFloat(document.getElementById('east').value) || 0;
+            const south = parseFloat(document.getElementById('south').value) || 0;
             const west = parseFloat(document.getElementById('west').value) || 0;
             const north = parseFloat(document.getElementById('north').value) || 0;
-            const south = parseFloat(document.getElementById('south').value) || 0;
 
             // సగటు పొడవు మరియు వెడల్పును లెక్కించండి (అడుగుల్లో)
             const avgLength = (east + west) / 2;
