@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>భూమి విస్తీర్ణం లెక్కింపు</title>
+    <style>
+        body {
+            font-family: 'Noto Sans Telugu', Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: left;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+            font-weight: bold;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .input-group label {
+            width: 120px;
+            font-size: 16px;
+            color: #555;
+            font-weight: bold; /* Make labels bold */
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold; /* Make button text bold */
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            font-weight: bold; /* Make result text bold */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>భూమి విస్తీర్ణం లెక్కింపు</h1>
+        <div class="input-group">
+            <label for="east">తూర్పు పొడవు:</label>
+            <input type="number" id="east" placeholder="అడుగులు" />
+        </div>
+        <div class="input-group">
+            <label for="west">పడమర పొడవు:</label>
+            <input type="number" id="west" placeholder="అడుగులు" />
+        </div>
+        <div class="input-group">
+            <label for="north">ఉత్తర పొడవు:</label>
+            <input type="number" id="north" placeholder="అడుగులు" />
+        </div>
+        <div class="input-group">
+            <label for="south">దక్షిణ పొడవు:</label>
+            <input type="number" id="south" placeholder="అడుగులు" />
+        </div>
+        <button onclick="calculateArea()">విస్తీర్ణాన్ని లెక్కించండి</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function calculateArea() {
+            const east = parseFloat(document.getElementById('east').value) || 0;
+            const west = parseFloat(document.getElementById('west').value) || 0;
+            const north = parseFloat(document.getElementById('north').value) || 0;
+            const south = parseFloat(document.getElementById('south').value) || 0;
+
+            // సగటు పొడవు మరియు వెడల్పును లెక్కించండి (అడుగుల్లో)
+            const avgLength = (east + west) / 2;
+            const avgWidth = (north + south) / 2;
+
+            // చదరపు అడుగులలో విస్తీర్ణాన్ని లెక్కించండి
+            const areaSqFt = avgLength * avgWidth;
+
+            // గజములుగా మార్చండి (1 గజం = 9 చదరపు అడుగులు)
+            const areaInGajams = areaSqFt / 9;
+
+            // సెంట్లుగా మార్చండి (48.4 గజములు = 1 సెంట్)
+            const areaInCents = areaInGajams / 48.4;
+
+            // మొత్తం సెంట్లు మరియు మిగిలిన గజములు
+            const wholeCents = Math.floor(areaInCents); // మొత్తం సెంట్లు
+            const remainingGajams = (areaInCents - wholeCents) * 48.4; // మిగిలిన గజములు
+
+            let resultText = "";
+            if (wholeCents === 0) {
+                // 1 సెంట్ కన్నా తక్కువ అయితే, గజములలో మాత్రమే ప్రదర్శించండి
+                resultText = `భూమి విస్తీర్ణం: ${remainingGajams.toFixed(2)} గజములు`;
+            } else {
+                // "X సెంట్లు మరియు Y గజములు" గా ప్రదర్శించండి
+                resultText = `భూమి విస్తీర్ణం: ${wholeCents} సెంట్${wholeCents > 1 ? 'లు' : ''} మరియు ${remainingGajams.toFixed(2)} గజములు`;
+            }
+
+            document.getElementById('result').innerText = resultText;
+        }
+    </script>
+</body>
+</html>
