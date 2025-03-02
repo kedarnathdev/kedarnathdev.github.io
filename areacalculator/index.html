@@ -50,18 +50,28 @@
             box-sizing: border-box;
         }
         button {
-            width: 100%;
+            width: 48%;
             padding: 10px;
-            background-color: #28a745;
-            color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            font-weight: bold; /* Make button text bold */
+            font-weight: bold;
+            margin-top: 10px;
         }
-        button:hover {
+        button.calculate {
+            background-color: #28a745;
+            color: white;
+        }
+        button.calculate:hover {
             background-color: #218838;
+        }
+        button.reset {
+            background-color: #dc3545;
+            color: white;
+        }
+        button.reset:hover {
+            background-color: #c82333;
         }
         .result {
             margin-top: 20px;
@@ -97,7 +107,8 @@
             <label for="north">ఉత్తర పొడవు:</label>
             <input type="number" id="north" placeholder="అడుగులు" />
         </div>
-        <button onclick="calculateArea()">విస్తీర్ణాన్ని లెక్కించండి</button>
+        <button class="calculate" onclick="calculateArea()">విస్తీర్ణాన్ని లెక్కించండి</button>
+        <button class="reset" onclick="clearInputs()">రీసెట్ చేయండి</button>
         <div class="result" id="result"></div>
         <div class="legend">* గమనిక: 48.4 గజములు = 1 సెంట్</div>
     </div>
@@ -136,6 +147,14 @@
             }
 
             document.getElementById('result').innerText = resultText;
+        }
+
+        function clearInputs() {
+            document.getElementById('east').value = '';
+            document.getElementById('south').value = '';
+            document.getElementById('west').value = '';
+            document.getElementById('north').value = '';
+            document.getElementById('result').innerText = '';
         }
     </script>
 </body>
