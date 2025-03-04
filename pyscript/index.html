@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <title>PyScript REPL</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PyScript REPL Example</title>
-    <!-- Include PyScript CSS and JS -->
-    <link rel="stylesheet" href="https://pyscript.net/releases/2025.2.4/core.css">
-    <script type="module" src="https://pyscript.net/releases/2025.2.4/core.js"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="https://pyscript.net/releases/2022.12.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2022.12.1/pyscript.js"></script>
 </head>
 <body>
-    <h1>PyScript REPL Example</h1>
-
-    <!-- Embed a Python REPL (Read-Eval-Print Loop) with id and autogenerate attribute -->
-    <py-repl id="my-repl" autogenerate="true"></py-repl>
+    <h1>PyScript REPL</h1>
+    <py-repl auto-generate="true">
+    # type some code here
+    </py-repl>
 </body>
 </html>
