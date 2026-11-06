@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <title>Live Gold & Silver Rates</title>
+  <title>Live Gold &amp; Silver Rates</title>
   <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
   <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
   <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
@@ -30,12 +30,18 @@
       <p id="rate-status" role="status" aria-live="polite">ధరలను పొందుతోంది…</p>
     </header>
     <table id="data-table">
-      <thead><tr><th scope="col">నగరం</th><th scope="col">ధర</th></tr></thead>
+      <thead>
+        <tr>
+          <th scope="col">ఉత్పత్తి</th>
+          <th scope="col">కొనుగోలు (Bid)</th>
+          <th scope="col">అమ్మకం (Ask)</th>
+        </tr>
+      </thead>
       <tbody id="rates-body">
-        <tr><td colspan="2">ధరలను పొందుతోంది…</td></tr>
+        <tr><td colspan="3">ధరలను పొందుతోంది…</td></tr>
       </tbody>
     </table>
-    <p class="footnote">ధరలు ప్రొవైడర్ నుంచి అందిన తాజా సమాచారంపై ఆధారపడి ఉంటాయి.</p>
+    <p class="footnote">ధరలు dP Gold ప్రసార ఫీడ్ నుంచి అందిన తాజా సమాచారం. Bid/Ask విలువలు ప్రొవైడర్ ఇచ్చినట్లుగానే చూపబడతాయి; ఉత్పత్తి యూనిట్‌ను ఉత్పత్తి పేరులో చూడండి.</p>
   </main>
   <script src="script.js" defer></script>
 </body>
