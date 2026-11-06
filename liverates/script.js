@@ -16,7 +16,6 @@
   }
 
   function parseRows(raw) {
-    // Some VOTS responses escape tabs/newlines instead of returning literal separators.
     const text = String(raw ?? "")
       .replace(/\\u000d\\u000a/gi, "\n")
       .replace(/\\u000a/gi, "\n")
@@ -24,47 +23,62 @@
       .replace(/\\r\\n/gi, "\n");
 
     const rows = [];
-    for (const line of text.split(/\r?\n/)) {
+    const numeric = "-?\\\\d[\\\\d,]*(?:\\\\.\\\\d+)?";
+    // Actual feed sample is whitespace-delimited, not tab-delimited.
+    // Product names may contain spaces, so capture the name up to the first price.
+    const spacedRow = new RegExp(
+      "^\\\\s*(\\\\S+)\\\\s+(.+?)\\\\s+(" + numeric + ")\\\\s+(" + numeric +
+      ")(?:\\\\s+(" + numeric + "))?(?:\\\\s+(" + numeric + "))?(?:\\\\s+.*)?\\\\s*$"
+    );
+
+    for (const line of text.split(/\\r?\\n/)) {
       if (!line.trim()) continue;
-      const cells = line.split("\t").map(cell => cell.trim());
-      if (cells.length < 4) continue;
+      let symbolId = "";
+      let product = "";
+      let bid = null;
+      let ask = null;
+      let high = null;
+      let low = null;
 
-      // VOTS layout described from the dP Gold feed:
-      // [symbol_id, product_name, bid, ask, high, low, optional fields...]
-      const product = cells[1] || "";
-      if (!/\b(?:GOLD|SILVER)\b/i.test(product)) continue;
+      const tabCells = line.split("\\t").map(cell => cell.trim()).filter(Boolean);
+      if (tabCells.length >= 4 && /\\b(?:GOLD|SILVER)\\b/i.test(tabCells[1] || "")) {
+        symbolId = tabCells[0];
+        product = tabCells[1];
+        bid = numberOrNull(tabCells[2]);
+        ask = numberOrNull(tabCells[3]);
+        high = numberOrNull(tabCells[4]);
+        low = numberOrNull(tabCells[5]);
+      } else {
+        const match = line.match(spacedRow);
+        if (!match) continue;
+        symbolId = match[1];
+        product = match[2].trim();
+        bid = numberOrNull(match[3]);
+        ask = numberOrNull(match[4]);
+        high = numberOrNull(match[5]);
+        low = numberOrNull(match[6]);
+      }
 
-      const bid = numberOrNull(cells[2]);
-      const ask = numberOrNull(cells[3]);
+      if (!/\\b(?:GOLD|SILVER)\\b/i.test(product)) continue;
       if (bid === null && ask === null) continue;
 
-      rows.push({
-        id: cells[0] || product,
-        product,
-        bid,
-        ask,
-        high: numberOrNull(cells[4]),
-        low: numberOrNull(cells[5])
-      });
+      rows.push({ id: symbolId || product, product, bid, ask, high, low });
     }
 
-    // Keep a defensive JSON path if the provider changes its transport format.
-    if (!rows.length && /^[\s]*[\[{]/.test(text)) {
+    if (!rows.length && /^[\\s]*[\\[{]/.test(text)) {
       try {
         const parsed = JSON.parse(text);
         const visit = value => {
           if (Array.isArray(value)) return value.forEach(visit);
           if (!value || typeof value !== "object") return;
           const product = value.product ?? value.Product ?? value.product_name ?? value.name ?? value.Name;
-          if (product && /\b(?:GOLD|SILVER)\b/i.test(String(product))) {
+          if (product && /\\b(?:GOLD|SILVER)\\b/i.test(String(product))) {
             const bid = numberOrNull(value.bid ?? value.Bid);
             const ask = numberOrNull(value.ask ?? value.Ask);
             if (bid !== null || ask !== null) {
               rows.push({
                 id: String(value.symbol_id ?? value.symbolId ?? product),
-                product: String(product),
-                bid,
-                ask,
+                product: String(product), bid, ask,
                 high: numberOrNull(value.high ?? value.High),
                 low: numberOrNull(value.low ?? value.Low)
               });
@@ -75,12 +89,9 @@
           });
         };
         visit(parsed);
-      } catch (_) {
-        // The user-facing error below reports an unrecognized response.
-      }
+      } catch (_) {}
     }
 
-    // Deduplicate repeated instrument IDs without changing provider order.
     const unique = new Map();
     for (const row of rows) unique.set(row.id, row);
     return [...unique.values()];
