@@ -1,134 +1,170 @@
-var url = "http://viewbcastgold.dpgold.in:8811/VOTSBroadcast/Services/xml/GetLiveRate";
+(() => {
+  "use strict";
 
-var priceHistory = {
-    "MUMBAI ": 0,
-    "BANGALORE": 0,
-    "CHENNAI - CBE": 0,
-    "HYDERABAD": 0,
-    "VJA - VIZAG": 0,
-    "NELLORE": 0,
-    "SILVER ALL LOCO": 0
-}
+  const ENDPOINT = "/.netlify/functions/live-rates";
+  const REFRESH_MS = 2000;
+  const names = [
+    { key: "MUMBAI", label: "ముంబై", unit: "1 గ్రాము" },
+    { key: "BANGALORE", label: "బెంగళూరు", unit: "1 గ్రాము" },
+    { key: "CHENNAI - CBE", label: "చెన్నై", unit: "1 గ్రాము" },
+    { key: "HYDERABAD", label: "హైదరాబాద్", unit: "1 గ్రాము" },
+    { key: "VJA - VIZAG", label: "విజయవాడ - వైజాగ్", unit: "1 గ్రాము" },
+    { key: "NELLORE", label: "నెల్లూరు", unit: "1 గ్రాము" },
+    { key: "SILVER ALL LOCO", label: "వెండి", unit: "1 కేజీ" }
+  ];
 
-translate = {
-    "MUMBAI ": "ముంబై",
-    "BANGALORE": "బెంగళూరు",
-    "CHENNAI - CBE": "చెన్నై",
-    "HYDERABAD": "హైదరాబాద్",
-    "VJA - VIZAG": "విజయవాడ - వైజాగ్",
-    "NELLORE": "నెల్లూరు",
-    "SILVER ALL LOCO": "వెండి"
-}
+  const body = document.getElementById("rates-body");
+  const status = document.getElementById("rate-status");
+  const history = new Map();
+  let stopped = false;
 
-function fetchData() {
-    fetch("api.php")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to retrieve HTML data. Status code: " + response.status);
-        }
-        return response.text();
-    })
-    .then(htmlData => {
-        const encodedText = htmlData.toString()
-        const lines = encodedText.split("\\u000d\\u000a");
-        const dataList = lines.map(line => {
-
-                const parts = line.split(/\\u0009|\\s+/);
-                const Category = parts[1];
-                const Price = parseFloat(parts[2].replace('$', ''));
-
-                const High = parseFloat(parts[3]);
-                const Low = parseFloat(parts[4]);
-                const Change = parseFloat(parts[5]);
-                const ChangePercentage = parseFloat(parts[6]);
-                const PreviousClose = parts[7] === "\\u0009" ? NaN : parseFloat(parts[7]);
-
-                return {
-                    Category,
-                    Price,
-                    High,
-                    Low,
-                    Change,
-                    ChangePercentage,
-                    PreviousClose
-                };
-            });
-
-        console.log(dataList);
-          const tableBody = document.querySelector('#data-table tbody');
-          tableBody.innerHTML = ""
-          for (i = 3; i <= dataList.length; i++) {
-            var data = dataList[i]
-            console.log(data)
-            const row = document.createElement('tr');
-            const categoryCell = document.createElement('td');
-            categoryCell.textContent = translate[data.Category];
-            row.appendChild(categoryCell);
-            const priceCell = document.createElement('td');
-            if (data.Category === "SILVER ALL LOCO") {
-                
-                priceCell.textContent = data.Price + "  (1 కేజీ)";
-                row.appendChild(priceCell);
-                tableBody.appendChild(row);
-                
-            }
-            else {
-                //const priceCell = document.createElement('td');
-                priceCell.textContent = data.Price + "  (1 గ్రాము)";
-                row.appendChild(priceCell);
-                tableBody.appendChild(row);
-            }
-
-            if(priceHistory[data.Category] > data.Price) {
-                priceCell.classList.add('highlightred');
-
-                setTimeout(() => {
-                    priceCell.classList.remove('highlightred');
-                }, 500);
-            }
-            else if (priceHistory[data.Category] < data.Price) {
-                priceCell.classList.add('highlightgreen');
-
-                setTimeout(() => {
-                    priceCell.classList.remove('highlightgreen');
-                }, 500);
-            }
-
-            priceHistory[data.Category] = data.Price
-            
-          }
-          
-          
-
-    })
-    .catch(error => {
-        console.log(error);
-    });
-
-}
-
-// Get the current date and time in Telugu and update it every second
-function updateCurrentDateTime() {
-    const currentDateTimeElement = document.getElementById("current-datetime");
-    setInterval(() => {
-      const now = new Date();
-      const options = {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZoneName: "short"
-      };
-      const formattedDateTime = now.toLocaleDateString("te-IN", options);
-      currentDateTimeElement.textContent = `సమయం: ${formattedDateTime}`;
-    }, 1000); // Update every second
+  function normalizeCategory(value) {
+    return String(value || "").toUpperCase().replace(/\s+/g, " ").trim();
   }
-  
-  // Call the function to start updating the current date and time
-  updateCurrentDateTime();
-  
 
-setInterval(fetchData, 2000)
+  function identifyCategory(value) {
+    const normalized = normalizeCategory(value);
+    return names.find(item => normalized === item.key ||
+      normalized.replace(/\s/g, "") === item.key.replace(/\s/g, ""));
+  }
+
+  function parseRows(raw) {
+    const text = String(raw || "")
+      .replace(/\\u000d\\u000a/gi, "\n")
+      .replace(/\\u000a/gi, "\n")
+      .replace(/\\u0009/gi, "\t")
+      .replace(/\\r\\n/gi, "\n");
+
+    const rows = [];
+    for (const line of text.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+
+      // First try tab-separated records; this preserves multi-word city names.
+      const cells = line.split("\t").map(value => value.trim());
+      let category = null;
+      let price = NaN;
+
+      for (let i = 0; i < cells.length; i++) {
+        const match = identifyCategory(cells[i]);
+        if (match) {
+          category = match;
+          price = Number(String(cells[i + 1] || "").replace(/[^0-9.+-]/g, ""));
+          break;
+        }
+      }
+
+      // Some provider responses are whitespace-delimited rather than TSV.
+      if (!category) {
+        const pattern = /(SILVER\s+ALL\s+LOCO|CHENNAI\s*-\s*CBE|VJA\s*-\s*VIZAG|MUMBAI|BANGALORE|HYDERABAD|NELLORE)\s+([^\s]+)/i;
+        const match = line.match(pattern);
+        if (match) {
+          category = identifyCategory(match[1]);
+          price = Number(String(match[2]).replace(/[^0-9.+-]/g, ""));
+        }
+      }
+
+      if (category && Number.isFinite(price) && price > 0) {
+        rows.push({ ...category, price });
+      }
+    }
+
+    // Also accept a JSON response if the upstream changes its response format.
+    if (!rows.length && /^[\s]*[\[{]/.test(text)) {
+      try {
+        const parsed = JSON.parse(text);
+        const visit = value => {
+          if (Array.isArray(value)) return value.forEach(visit);
+          if (!value || typeof value !== "object") return;
+          const categoryValue = value.Category ?? value.category ?? value.name ?? value.Name;
+          const priceValue = value.Price ?? value.price ?? value.rate ?? value.Rate;
+          const category = identifyCategory(categoryValue);
+          const price = Number(String(priceValue ?? "").replace(/[^0-9.+-]/g, ""));
+          if (category && Number.isFinite(price) && price > 0) rows.push({ ...category, price });
+          Object.values(value).forEach(child => {
+            if (child && typeof child === "object") visit(child);
+          });
+        };
+        visit(parsed);
+      } catch (_) {
+        // Keep the clear "no recognizable rates" state below.
+      }
+    }
+
+    const unique = new Map(rows.map(row => [row.key, row]));
+    return names.map(item => unique.get(item.key)).filter(Boolean);
+  }
+
+  function renderRates(rows) {
+    const fragment = document.createDocumentFragment();
+
+    for (const item of rows) {
+      const row = document.createElement("tr");
+      const city = document.createElement("td");
+      const rate = document.createElement("td");
+      city.textContent = item.label;
+      rate.textContent = new Intl.NumberFormat("en-IN", {
+        maximumFractionDigits: 2
+      }).format(item.price) + "  (" + item.unit + ")";
+
+      const previous = history.get(item.key);
+      if (previous !== undefined && previous !== item.price) {
+        rate.classList.add(item.price > previous ? "highlightgreen" : "highlightred");
+      }
+      history.set(item.key, item.price);
+      row.append(city, rate);
+      fragment.appendChild(row);
+    }
+
+    body.replaceChildren(fragment);
+  }
+
+  async function refresh() {
+    if (stopped) return;
+    try {
+      const response = await fetch(ENDPOINT, {
+        method: "GET",
+        cache: "no-store",
+        headers: { "Accept": "text/plain, application/json, application/xml, */*" }
+      });
+      const payload = await response.text();
+      if (!response.ok) {
+        let detail = payload;
+        try { detail = JSON.parse(payload).error || payload; } catch (_) {}
+        throw new Error("API " + response.status + ": " + detail.slice(0, 180));
+      }
+
+      const rows = parseRows(payload);
+      if (!rows.length) {
+        throw new Error("The rate provider responded, but its data format was not recognized.");
+      }
+      renderRates(rows);
+      status.textContent = "లైవ్ ధరలు • చివరి నవీకరణ: " +
+        new Date().toLocaleTimeString("te-IN");
+      status.dataset.state = "ok";
+    } catch (error) {
+      status.textContent = "ధరలను పొందలేకపోయాము: " + error.message;
+      status.dataset.state = "error";
+      if (!body.children.length || body.textContent.includes("పొందుతోంది")) {
+        body.innerHTML = '<tr><td colspan="2">ప్రస్తుతం ధరలు అందుబాటులో లేవు.</td></tr>';
+      }
+      console.error("Live rate refresh failed:", error);
+    } finally {
+      if (!stopped) window.setTimeout(refresh, REFRESH_MS);
+    }
+  }
+
+  function updateClock() {
+    const element = document.getElementById("current-datetime");
+    const now = new Date();
+    element.textContent = "సమయం: " + now.toLocaleString("te-IN", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      timeZone: "Asia/Kolkata"
+    });
+  }
+
+  updateClock();
+  window.setInterval(updateClock, 1000);
+  refresh();
+  window.addEventListener("pagehide", () => { stopped = true; });
+})();

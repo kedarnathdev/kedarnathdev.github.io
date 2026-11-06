@@ -1,51 +1,42 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f5f5f5;
-  }
-  .container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 80%;
-    max-width: 800px;
-    font-weight: 900;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  th {
-    background-color: #f5f5f5;
-    font-weight: bold;
-  }
-
-  tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-
-
-
-.highlightgreen {
-    color: white;
-    background-color: green;
-    transition: color 0.5s; /* Add a transition effect for smooth color change */
+:root {
+  color-scheme: light;
+  font-family: Arial, "Noto Sans Telugu", sans-serif;
+  background: #f5f6f8;
+  color: #202124;
 }
-
-.highlightred {
-  color: white;
-  background-color: red;
-  transition: color 0.5s; /* Add a transition effect for smooth color change */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 28px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f5f6f8;
+}
+.container {
+  width: min(100%, 800px);
+  padding: 24px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .08);
+}
+.heading-container { text-align: center; margin-bottom: 22px; }
+.heading-container img { object-fit: contain; }
+h1 { margin: 12px 0; font-size: clamp(1.5rem, 5vw, 2rem); }
+#current-datetime { color: #60656d; margin: 8px 0; }
+#rate-status { min-height: 1.5em; margin: 10px 0 0; color: #28754b; font-size: .92rem; }
+#rate-status[data-state="error"] { color: #b42318; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e7e9ed; }
+th { background: #f5f6f8; font-weight: 700; }
+tr:nth-child(even) { background: #fafbfc; }
+td:last-child, th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.highlightgreen { color: #fff; background: #18864b !important; transition: background-color .5s; }
+.highlightred { color: #fff; background: #c62828 !important; transition: background-color .5s; }
+.footnote { margin: 18px 0 0; color: #737982; font-size: .8rem; text-align: center; }
+@media (max-width: 520px) {
+  body { padding: 12px; }
+  .container { padding: 16px 12px; border-radius: 10px; }
+  th, td { padding: 12px 8px; font-size: .92rem; }
 }

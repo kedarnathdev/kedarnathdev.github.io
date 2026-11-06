@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Live Gold & Silver Rates</title>
   <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
   <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
   <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
@@ -12,35 +14,29 @@
   <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
   <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
-  <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="manifest" href="/manifest.json">
-  <meta name="msapplication-TileColor" content="#ffffff">
-  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
-  <meta name="theme-color" content="#ffffff">
-  <title>Gold Live Rates</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="heading-container">
-      <img src="live.gif" alt="Live GIF" width="100" height="30">
-      <h1>Live Gold Rates</h1>
-      <p id="current-datetime"></p>
-    </div>
+  <main class="container">
+    <header class="heading-container">
+      <img src="live.gif" alt="Live" width="100" height="30">
+      <h1>Live Gold &amp; Silver Rates</h1>
+      <p id="current-datetime" lang="te">సమయం: --</p>
+      <p id="rate-status" role="status" aria-live="polite">ధరలను పొందుతోంది…</p>
+    </header>
     <table id="data-table">
-      <thead>
-        <tr>
-          <th>City</th>
-          <th>ధర</th>
-        </tr>
-      </thead>
-      <tbody>
+      <thead><tr><th scope="col">నగరం</th><th scope="col">ధర</th></tr></thead>
+      <tbody id="rates-body">
+        <tr><td colspan="2">ధరలను పొందుతోంది…</td></tr>
       </tbody>
     </table>
-  </div>
-  <script src="script.js"></script>
+    <p class="footnote">ధరలు ప్రొవైడర్ నుంచి అందిన తాజా సమాచారంపై ఆధారపడి ఉంటాయి.</p>
+  </main>
+  <script src="script.js" defer></script>
 </body>
 </html>
