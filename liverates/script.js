@@ -101,25 +101,68 @@
     }).format(value);
   }
 
+  function normalizeProduct(product) {
+    return String(product || "").toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
+  }
+
+  function hasUnit(product, amount, units) {
+    const normalized = normalizeProduct(product);
+    const unitPattern = units.join("|");
+    return new RegExp("(?:^|\\s)" + amount + "\\s*(?:" + unitPattern + ")(?=\\s|$)", "i").test(normalized);
+  }
+
+  function selectRequestedRates(rows) {
+    const requested = [
+      {
+        id: "gold-1g",
+        label: "Gold – 1g",
+        matches: item => /\\bGOLD\\b/i.test(item.product) &&
+          hasUnit(item.product, "1", ["G", "GM", "GMS", "GRAM", "GRAMS"])
+      },
+      {
+        id: "gold-10g",
+        label: "Gold – 10g",
+        matches: item => /\\bGOLD\\b/i.test(item.product) &&
+          hasUnit(item.product, "10", ["G", "GM", "GMS", "GRAM", "GRAMS"])
+      },
+      {
+        id: "silver-1kg",
+        label: "Silver – 1kg",
+        matches: item => /\\bSILVER\\b/i.test(item.product) &&
+          (hasUnit(item.product, "1", ["KG", "KGS", "KILOGRAM", "KILOGRAMS"]) ||
+           hasUnit(item.product, "1000", ["G", "GM", "GMS", "GRAM", "GRAMS"]))
+      }
+    ];
+
+    return requested.map(target => {
+      const match = rows.find(target.matches);
+      return {
+        id: target.id,
+        label: target.label,
+        price: match ? (match.ask ?? match.bid) : null
+      };
+    });
+  }
+
   function renderRates(rows) {
+    const selected = selectRequestedRates(rows);
     const fragment = document.createDocumentFragment();
-    for (const item of rows) {
+
+    for (const item of selected) {
       const row = document.createElement("tr");
       const product = document.createElement("td");
-      const bid = document.createElement("td");
-      const ask = document.createElement("td");
+      const price = document.createElement("td");
 
-      product.textContent = item.product;
-      bid.textContent = formatPrice(item.bid);
-      ask.textContent = formatPrice(item.ask);
+      product.textContent = item.label;
+      price.textContent = formatPrice(item.price);
 
       const previous = history.get(item.id);
-      if (previous && item.ask !== null && previous.ask !== item.ask) {
-        ask.classList.add(item.ask > previous.ask ? "highlightgreen" : "highlightred");
+      if (previous !== undefined && item.price !== null && previous !== item.price) {
+        price.classList.add(item.price > previous ? "highlightgreen" : "highlightred");
       }
-      history.set(item.id, { bid: item.bid, ask: item.ask });
+      history.set(item.id, item.price);
 
-      row.append(product, bid, ask);
+      row.append(product, price);
       fragment.appendChild(row);
     }
     body.replaceChildren(fragment);
@@ -154,7 +197,7 @@
       status.dataset.state = "error";
       console.error("Live rate refresh failed:", error);
       if (!body.children.length || body.textContent.includes("పొందుతోంది")) {
-        body.innerHTML = '<tr><td colspan="3">ప్రస్తుతం ధరలు అందుబాటులో లేవు.</td></tr>';
+        body.innerHTML = '<tr><td colspan="2">ప్రస్తుతం ధరలు అందుబాటులో లేవు.</td></tr>';
       }
     } finally {
       if (!stopped) window.setTimeout(refresh, REFRESH_MS);
