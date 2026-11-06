@@ -111,37 +111,60 @@
     return new RegExp("(?:^|\\s)" + amount + "\\s*(?:" + unitPattern + ")(?=\\s|$)", "i").test(normalized);
   }
 
-  function selectRequestedRates(rows) {
-    const requested = [
-      {
-        id: "gold-1g",
-        label: "Gold – 1g",
-        matches: item => /\bGOLD\b/i.test(item.product) &&
-          hasUnit(item.product, "1", ["G", "GM", "GMS", "GRAM", "GRAMS"])
-      },
-      {
-        id: "gold-10g",
-        label: "Gold – 10g",
-        matches: item => /\bGOLD\b/i.test(item.product) &&
-          hasUnit(item.product, "10", ["G", "GM", "GMS", "GRAM", "GRAMS"])
-      },
-      {
-        id: "silver-1kg",
-        label: "Silver – 1kg",
-        matches: item => /\bSILVER\b/i.test(item.product) &&
-          (hasUnit(item.product, "1", ["KG", "KGS", "KILOGRAM", "KILOGRAMS"]) ||
-           hasUnit(item.product, "1000", ["G", "GM", "GMS", "GRAM", "GRAMS"]))
-      }
-    ];
+  function quoteOf(item) {
+    return item.ask ?? item.bid;
+  }
 
-    return requested.map(target => {
-      const match = rows.find(target.matches);
-      return {
-        id: target.id,
-        label: target.label,
-        price: match ? (match.ask ?? match.bid) : null
-      };
-    });
+  function purityScore(product) {
+    const name = normalizeProduct(product);
+    if (/\b(?:999|24K|24 KT)\b/.test(name)) return 3;
+    if (/\b(?:995|23K|23 KT)\b/.test(name)) return 2;
+    if (/\b(?:916|22K|22 KT|18K|18 KT)\b/.test(name)) return 0;
+    return 1;
+  }
+
+  function selectRequestedRates(rows) {
+    // Ignore international spot rows: those are USD per troy ounce, not local
+    // retail/bullion prices. Prefer local 999/24K, then 995/23K bullion quotes.
+    const goldCandidates = rows
+      .filter(item => /\bGOLD\b/i.test(item.product) &&
+        !/\b(?:SPOT|USDINR|USD|INR)\b/i.test(item.product) &&
+        purityScore(item.product) > 0 &&
+        quoteOf(item) !== null)
+      .sort((a, b) => purityScore(b.product) - purityScore(a.product));
+
+    const silverCandidates = rows
+      .filter(item => /\bSILVER\b/i.test(item.product) &&
+        !/\b(?:SPOT|USDINR|USD|INR)\b/i.test(item.product) &&
+        quoteOf(item) !== null)
+      .sort((a, b) => purityScore(b.product) - purityScore(a.product));
+
+    const gold = goldCandidates[0] || null;
+    const goldQuote = gold ? quoteOf(gold) : null;
+
+    // dP's local bullion feed may not include "1g"/"10g" in the product name.
+    // Infer its quote unit from its magnitude; 1g and 10g are then the same
+    // bullion rate expressed at the two requested weights.
+    let goldPerGram = null;
+    if (goldQuote !== null) {
+      if (goldQuote >= 50000 && goldQuote < 500000) goldPerGram = goldQuote / 10;
+      else if (goldQuote >= 5000 && goldQuote < 50000) goldPerGram = goldQuote;
+      else if (goldQuote >= 500000 && goldQuote < 5000000) goldPerGram = goldQuote / 100;
+    }
+
+    const silver = silverCandidates.find(item => {
+      const name = normalizeProduct(item.product);
+      const quote = quoteOf(item);
+      return hasUnit(name, "1", ["KG", "KGS", "KILOGRAM", "KILOGRAMS"]) ||
+        hasUnit(name, "1000", ["G", "GM", "GMS", "GRAM", "GRAMS"]) ||
+        (quote >= 50000 && quote < 500000);
+    }) || null;
+
+    return [
+      { id: "gold-1g", label: "Gold – 1g", price: goldPerGram },
+      { id: "gold-10g", label: "Gold – 10g", price: goldPerGram === null ? null : goldPerGram * 10 },
+      { id: "silver-1kg", label: "Silver – 1kg", price: silver ? quoteOf(silver) : null }
+    ];
   }
 
   function renderRates(rows) {
