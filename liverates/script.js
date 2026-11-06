@@ -116,19 +116,19 @@
       {
         id: "gold-1g",
         label: "Gold – 1g",
-        matches: item => /\\bGOLD\\b/i.test(item.product) &&
+        matches: item => /\bGOLD\b/i.test(item.product) &&
           hasUnit(item.product, "1", ["G", "GM", "GMS", "GRAM", "GRAMS"])
       },
       {
         id: "gold-10g",
         label: "Gold – 10g",
-        matches: item => /\\bGOLD\\b/i.test(item.product) &&
+        matches: item => /\bGOLD\b/i.test(item.product) &&
           hasUnit(item.product, "10", ["G", "GM", "GMS", "GRAM", "GRAMS"])
       },
       {
         id: "silver-1kg",
         label: "Silver – 1kg",
-        matches: item => /\\bSILVER\\b/i.test(item.product) &&
+        matches: item => /\bSILVER\b/i.test(item.product) &&
           (hasUnit(item.product, "1", ["KG", "KGS", "KILOGRAM", "KILOGRAMS"]) ||
            hasUnit(item.product, "1000", ["G", "GM", "GMS", "GRAM", "GRAMS"]))
       }
