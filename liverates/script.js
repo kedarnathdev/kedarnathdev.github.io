@@ -23,15 +23,14 @@
       .replace(/\\r\\n/gi, "\n");
 
     const rows = [];
-    const numeric = "-?\\\\d[\\\\d,]*(?:\\\\.\\\\d+)?";
-    // Actual feed sample is whitespace-delimited, not tab-delimited.
-    // Product names may contain spaces, so capture the name up to the first price.
+    const numeric = "-?\\d[\\d,]*(?:\\.\\d+)?";
+    // The live feed is whitespace-delimited; product names can contain spaces.
     const spacedRow = new RegExp(
-      "^\\\\s*(\\\\S+)\\\\s+(.+?)\\\\s+(" + numeric + ")\\\\s+(" + numeric +
-      ")(?:\\\\s+(" + numeric + "))?(?:\\\\s+(" + numeric + "))?(?:\\\\s+.*)?\\\\s*$"
+      "^\\s*(\\S+)\\s+(.+?)\\s+(" + numeric + ")\\s+(" + numeric +
+      ")(?:\\s+(" + numeric + "))?(?:\\s+(" + numeric + "))?(?:\\s+.*)?\\s*$"
     );
 
-    for (const line of text.split(/\\r?\\n/)) {
+    for (const line of text.split(/\r?\n/)) {
       if (!line.trim()) continue;
       let symbolId = "";
       let product = "";
@@ -40,8 +39,8 @@
       let high = null;
       let low = null;
 
-      const tabCells = line.split("\\t").map(cell => cell.trim()).filter(Boolean);
-      if (tabCells.length >= 4 && /\\b(?:GOLD|SILVER)\\b/i.test(tabCells[1] || "")) {
+      const tabCells = line.split("\t").map(cell => cell.trim()).filter(Boolean);
+      if (tabCells.length >= 4 && /\b(?:GOLD|SILVER)\b/i.test(tabCells[1] || "")) {
         symbolId = tabCells[0];
         product = tabCells[1];
         bid = numberOrNull(tabCells[2]);
@@ -59,20 +58,19 @@
         low = numberOrNull(match[6]);
       }
 
-      if (!/\\b(?:GOLD|SILVER)\\b/i.test(product)) continue;
+      if (!/\b(?:GOLD|SILVER)\b/i.test(product)) continue;
       if (bid === null && ask === null) continue;
-
       rows.push({ id: symbolId || product, product, bid, ask, high, low });
     }
 
-    if (!rows.length && /^[\\s]*[\\[{]/.test(text)) {
+    if (!rows.length && /^[\s]*[\[{]/.test(text)) {
       try {
         const parsed = JSON.parse(text);
         const visit = value => {
           if (Array.isArray(value)) return value.forEach(visit);
           if (!value || typeof value !== "object") return;
           const product = value.product ?? value.Product ?? value.product_name ?? value.name ?? value.Name;
-          if (product && /\\b(?:GOLD|SILVER)\\b/i.test(String(product))) {
+          if (product && /\b(?:GOLD|SILVER)\b/i.test(String(product))) {
             const bid = numberOrNull(value.bid ?? value.Bid);
             const ask = numberOrNull(value.ask ?? value.Ask);
             if (bid !== null || ask !== null) {
