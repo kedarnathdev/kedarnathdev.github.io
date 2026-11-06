@@ -3,33 +3,21 @@
 
   const ENDPOINT = "/.netlify/functions/live-rates";
   const REFRESH_MS = 2000;
-  const names = [
-    { key: "MUMBAI", label: "ముంబై", unit: "1 గ్రాము" },
-    { key: "BANGALORE", label: "బెంగళూరు", unit: "1 గ్రాము" },
-    { key: "CHENNAI - CBE", label: "చెన్నై", unit: "1 గ్రాము" },
-    { key: "HYDERABAD", label: "హైదరాబాద్", unit: "1 గ్రాము" },
-    { key: "VJA - VIZAG", label: "విజయవాడ - వైజాగ్", unit: "1 గ్రాము" },
-    { key: "NELLORE", label: "నెల్లూరు", unit: "1 గ్రాము" },
-    { key: "SILVER ALL LOCO", label: "వెండి", unit: "1 కేజీ" }
-  ];
-
   const body = document.getElementById("rates-body");
   const status = document.getElementById("rate-status");
   const history = new Map();
   let stopped = false;
 
-  function normalizeCategory(value) {
-    return String(value || "").toUpperCase().replace(/\s+/g, " ").trim();
-  }
-
-  function identifyCategory(value) {
-    const normalized = normalizeCategory(value);
-    return names.find(item => normalized === item.key ||
-      normalized.replace(/\s/g, "") === item.key.replace(/\s/g, ""));
+  function numberOrNull(value) {
+    const text = String(value ?? "").trim().replace(/,/g, "");
+    if (!text || text === "-" || /^N\/?A$/i.test(text)) return null;
+    const number = Number(text);
+    return Number.isFinite(number) ? number : null;
   }
 
   function parseRows(raw) {
-    const text = String(raw || "")
+    // Some VOTS responses escape tabs/newlines instead of returning literal separators.
+    const text = String(raw ?? "")
       .replace(/\\u000d\\u000a/gi, "\n")
       .replace(/\\u000a/gi, "\n")
       .replace(/\\u0009/gi, "\t")
@@ -38,83 +26,93 @@
     const rows = [];
     for (const line of text.split(/\r?\n/)) {
       if (!line.trim()) continue;
+      const cells = line.split("\t").map(cell => cell.trim());
+      if (cells.length < 4) continue;
 
-      // First try tab-separated records; this preserves multi-word city names.
-      const cells = line.split("\t").map(value => value.trim());
-      let category = null;
-      let price = NaN;
+      // VOTS layout described from the dP Gold feed:
+      // [symbol_id, product_name, bid, ask, high, low, optional fields...]
+      const product = cells[1] || "";
+      if (!/\b(?:GOLD|SILVER)\b/i.test(product)) continue;
 
-      for (let i = 0; i < cells.length; i++) {
-        const match = identifyCategory(cells[i]);
-        if (match) {
-          category = match;
-          price = Number(String(cells[i + 1] || "").replace(/[^0-9.+-]/g, ""));
-          break;
-        }
-      }
+      const bid = numberOrNull(cells[2]);
+      const ask = numberOrNull(cells[3]);
+      if (bid === null && ask === null) continue;
 
-      // Some provider responses are whitespace-delimited rather than TSV.
-      if (!category) {
-        const pattern = /(SILVER\s+ALL\s+LOCO|CHENNAI\s*-\s*CBE|VJA\s*-\s*VIZAG|MUMBAI|BANGALORE|HYDERABAD|NELLORE)\s+([^\s]+)/i;
-        const match = line.match(pattern);
-        if (match) {
-          category = identifyCategory(match[1]);
-          price = Number(String(match[2]).replace(/[^0-9.+-]/g, ""));
-        }
-      }
-
-      if (category && Number.isFinite(price) && price > 0) {
-        rows.push({ ...category, price });
-      }
+      rows.push({
+        id: cells[0] || product,
+        product,
+        bid,
+        ask,
+        high: numberOrNull(cells[4]),
+        low: numberOrNull(cells[5])
+      });
     }
 
-    // Also accept a JSON response if the upstream changes its response format.
+    // Keep a defensive JSON path if the provider changes its transport format.
     if (!rows.length && /^[\s]*[\[{]/.test(text)) {
       try {
         const parsed = JSON.parse(text);
         const visit = value => {
           if (Array.isArray(value)) return value.forEach(visit);
           if (!value || typeof value !== "object") return;
-          const categoryValue = value.Category ?? value.category ?? value.name ?? value.Name;
-          const priceValue = value.Price ?? value.price ?? value.rate ?? value.Rate;
-          const category = identifyCategory(categoryValue);
-          const price = Number(String(priceValue ?? "").replace(/[^0-9.+-]/g, ""));
-          if (category && Number.isFinite(price) && price > 0) rows.push({ ...category, price });
+          const product = value.product ?? value.Product ?? value.product_name ?? value.name ?? value.Name;
+          if (product && /\b(?:GOLD|SILVER)\b/i.test(String(product))) {
+            const bid = numberOrNull(value.bid ?? value.Bid);
+            const ask = numberOrNull(value.ask ?? value.Ask);
+            if (bid !== null || ask !== null) {
+              rows.push({
+                id: String(value.symbol_id ?? value.symbolId ?? product),
+                product: String(product),
+                bid,
+                ask,
+                high: numberOrNull(value.high ?? value.High),
+                low: numberOrNull(value.low ?? value.Low)
+              });
+            }
+          }
           Object.values(value).forEach(child => {
             if (child && typeof child === "object") visit(child);
           });
         };
         visit(parsed);
       } catch (_) {
-        // Keep the clear "no recognizable rates" state below.
+        // The user-facing error below reports an unrecognized response.
       }
     }
 
-    const unique = new Map(rows.map(row => [row.key, row]));
-    return names.map(item => unique.get(item.key)).filter(Boolean);
+    // Deduplicate repeated instrument IDs without changing provider order.
+    const unique = new Map();
+    for (const row of rows) unique.set(row.id, row);
+    return [...unique.values()];
+  }
+
+  function formatPrice(value) {
+    return value === null ? "—" : new Intl.NumberFormat("en-IN", {
+      maximumFractionDigits: 2
+    }).format(value);
   }
 
   function renderRates(rows) {
     const fragment = document.createDocumentFragment();
-
     for (const item of rows) {
       const row = document.createElement("tr");
-      const city = document.createElement("td");
-      const rate = document.createElement("td");
-      city.textContent = item.label;
-      rate.textContent = new Intl.NumberFormat("en-IN", {
-        maximumFractionDigits: 2
-      }).format(item.price) + "  (" + item.unit + ")";
+      const product = document.createElement("td");
+      const bid = document.createElement("td");
+      const ask = document.createElement("td");
 
-      const previous = history.get(item.key);
-      if (previous !== undefined && previous !== item.price) {
-        rate.classList.add(item.price > previous ? "highlightgreen" : "highlightred");
+      product.textContent = item.product;
+      bid.textContent = formatPrice(item.bid);
+      ask.textContent = formatPrice(item.ask);
+
+      const previous = history.get(item.id);
+      if (previous && item.ask !== null && previous.ask !== item.ask) {
+        ask.classList.add(item.ask > previous.ask ? "highlightgreen" : "highlightred");
       }
-      history.set(item.key, item.price);
-      row.append(city, rate);
+      history.set(item.id, { bid: item.bid, ask: item.ask });
+
+      row.append(product, bid, ask);
       fragment.appendChild(row);
     }
-
     body.replaceChildren(fragment);
   }
 
@@ -135,19 +133,20 @@
 
       const rows = parseRows(payload);
       if (!rows.length) {
-        throw new Error("The rate provider responded, but its data format was not recognized.");
+        const preview = payload.replace(/\s+/g, " ").slice(0, 140);
+        throw new Error("Unrecognized provider response. Preview: " + (preview || "(empty)"));
       }
+
       renderRates(rows);
-      status.textContent = "లైవ్ ధరలు • చివరి నవీకరణ: " +
-        new Date().toLocaleTimeString("te-IN");
+      status.textContent = "లైవ్ ధరలు • చివరి నవీకరణ: " + new Date().toLocaleTimeString("te-IN");
       status.dataset.state = "ok";
     } catch (error) {
       status.textContent = "ధరలను పొందలేకపోయాము: " + error.message;
       status.dataset.state = "error";
-      if (!body.children.length || body.textContent.includes("పొందుతోంది")) {
-        body.innerHTML = '<tr><td colspan="2">ప్రస్తుతం ధరలు అందుబాటులో లేవు.</td></tr>';
-      }
       console.error("Live rate refresh failed:", error);
+      if (!body.children.length || body.textContent.includes("పొందుతోంది")) {
+        body.innerHTML = '<tr><td colspan="3">ప్రస్తుతం ధరలు అందుబాటులో లేవు.</td></tr>';
+      }
     } finally {
       if (!stopped) window.setTimeout(refresh, REFRESH_MS);
     }
@@ -155,8 +154,7 @@
 
   function updateClock() {
     const element = document.getElementById("current-datetime");
-    const now = new Date();
-    element.textContent = "సమయం: " + now.toLocaleString("te-IN", {
+    element.textContent = "సమయం: " + new Date().toLocaleString("te-IN", {
       weekday: "long", year: "numeric", month: "long", day: "numeric",
       hour: "2-digit", minute: "2-digit", second: "2-digit",
       timeZone: "Asia/Kolkata"
